@@ -1,9 +1,10 @@
 // Maps ward code (the "id" property on ward features, e.g. "K/E") to the
 // area / locality names covered by that ward.
+// Locality names are indicative; ward boundaries follow BMC's 24-ward GeoJSON.
 export const WARD_AREAS = {
   'A': ['Colaba', 'Cuffe Parade', 'Nariman Point', 'Fort', 'Churchgate', 'Navy Nagar'],
   'B': ['Dongri', 'Masjid Bunder', 'Mohammed Ali Road', 'Pydhonie'],
-  'C': ['Marine Lines', 'Kalbadevi', 'Bhuleshwar', 'Charni Road', 'Zaveri Bazaar'],
+  'C': ['Marine Lines', 'Kalbadevi', 'Bhuleshwar', 'Zaveri Bazaar', 'Dhobi Talao'],
   'D': ['Malabar Hill', 'Grant Road', 'Girgaon', 'Tardeo', 'Breach Candy', 'Walkeshwar', 'Kemps Corner'],
   'E': ['Byculla', 'Mazgaon', 'Agripada', 'Nagpada', 'Mumbai Central'],
   'F/S': ['Parel', 'Lalbaug', 'Sewri', 'Naigaon', 'Bhoiwada'],
@@ -13,8 +14,8 @@ export const WARD_AREAS = {
   'H/E': ['Bandra East', 'Bandra Kurla Complex', 'Kalina', 'Vakola', 'Santacruz East', 'Kherwadi'],
   'H/W': ['Bandra West', 'Khar West', 'Santacruz West', 'Pali Hill'],
   'K/E': ['Andheri East', 'Marol', 'MIDC', 'Jogeshwari East', 'Sahar', 'Vile Parle East', 'Chakala'],
-  'K/W': ['Andheri West', 'Juhu', 'Versova', 'Vile Parle West', 'Lokhandwala', 'Oshiwara'],
-  'P/S': ['Goregaon', 'Aarey Colony', 'Film City', 'Bangur Nagar'],
+  'K/W': ['Andheri West', 'Juhu', 'Versova', 'Vile Parle West', 'Lokhandwala', 'Jogeshwari West'],
+  'P/S': ['Goregaon', 'Aarey Colony', 'Film City', 'Bangur Nagar', 'Oshiwara'],
   'P/N': ['Malad', 'Malvani', 'Mith Chowki', 'Orlem'],
   'R/S': ['Kandivali', 'Charkop', 'Thakur Village', 'Poisar'],
   'R/C': ['Borivali', 'Gorai', 'Eksar', 'Kora Kendra'],
