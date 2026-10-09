@@ -1,2 +1,8 @@
 .venv/
 data/raw/
+web/node_modules/
+web/dist/
+__pycache__/
+*.pyc
+*.log
+.DS_Store

@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "city": "Mumbai",
+    "lat": 19.076,
+    "lon": 72.8777,
+    "period": "2020-01-01/2025-12-31",
+    "source": "Open-Meteo ERA5 archive API (hourly, 10 m)",
+    "method": "speed-weighted vector mean of wind FROM-direction",
+    "note": "October excluded as a weak transition month",
+    "direction_convention": "degrees clockwise from north; FROM direction"
+  },
+  "seasons": {
+    "winter": {
+      "from_deg": 352,
+      "toward_deg": 172,
+      "from_compass": "N",
+      "mean_speed_ms": 2.75,
+      "n_hours": 17328,
+      "rose": {
+        "N": 10.5,
+        "NNE": 6.9,
+        "NE": 12.5,
+        "ENE": 4.6,
+        "E": 2.0,
+        "ESE": 0.7,
+        "SE": 0.5,
+        "SSE": 0.4,
+        "S": 0.3,
+        "SSW": 0.3,
+        "SW": 0.5,
+        "WSW": 1.3,
+        "W": 4.4,
+        "WNW": 12.6,
+        "NW": 22.9,
+        "NNW": 19.8
+      }
+    },
+    "summer": {
+      "from_deg": 303,
+      "toward_deg": 123,
+      "from_compass": "WNW",
+      "mean_speed_ms": 3.09,
+      "n_hours": 13248,
+      "rose": {
+        "N": 4.4,
+        "NNE": 2.5,
+        "NE": 2.3,
+        "ENE": 1.4,
+        "E": 0.8,
+        "ESE": 0.5,
+        "SE": 0.7,
+        "SSE": 1.3,
+        "S": 2.1,
+        "SSW": 2.2,
+        "SW": 5.0,
+        "WSW": 9.3,
+        "W": 17.4,
+        "WNW": 24.9,
+        "NW": 16.8,
+        "NNW": 8.2
+      }
+    },
+    "monsoon": {
+      "from_deg": 238,
+      "toward_deg": 58,
+      "from_compass": "WSW",
+      "mean_speed_ms": 3.91,
+      "n_hours": 17568,
+      "rose": {
+        "N": 0.3,
+        "NNE": 0.3,
+        "NE": 0.3,
+        "ENE": 0.2,
+        "E": 0.3,
+        "ESE": 0.4,
+        "SE": 1.1,
+        "SSE": 3.1,
+        "S": 7.6,
+        "SSW": 16.8,
+        "SW": 33.7,
+        "WSW": 22.2,
+        "W": 7.7,
+        "WNW": 3.7,
+        "NW": 1.6,
+        "NNW": 0.6
+      }
+    }
+  }
+}
