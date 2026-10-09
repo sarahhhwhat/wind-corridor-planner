@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet'
-import { scoreColor, ndbiColor, SEASON_LABELS } from './constants.js'
+import { scoreColor, heatColor, ndbiColor, SEASON_LABELS } from './constants.js'
 import { wardAreas } from './wardAreas.js'
 
 const MUMBAI = [19.055, 72.90]
@@ -28,16 +28,29 @@ export default function MapView({ data, season, layers, selected, onSelect }) {
   const wind = data?.wind?.seasons?.[season]
   const ndbiGrid = data?.ndbiGrid
 
-  // ward choropleth layer
+  // observed ward LST range (°C) for the heat legend
+  const lstRange = useMemo(() => {
+    const v = wardFeatures.map((f) => f.properties.lst_c).filter((x) => typeof x === 'number')
+    if (!v.length) return null
+    return [Math.min(...v), Math.max(...v)]
+  }, [wardFeatures])
+
+  // ward choropleth layer — theme follows layers.wardLayer:
+  // 'priority' (default) | 'ventilation' | 'heat'
   useEffect(() => {
     if (!map.current || !wardFeatures.length) return
     if (layerRefs.current.wards) layerRefs.current.wards.remove()
     const geo = { type: 'FeatureCollection', features: wardFeatures }
     const lyr = L.geoJSON(geo, {
       style: (f) => {
-        const s = f.properties.seasons?.[season]?.score
+        const p = f.properties
+        const fillColor = layers.wardLayer === 'heat'
+          ? heatColor(p.heat_score)
+          : layers.wardLayer === 'priority'
+            ? heatColor(p.priority_score)
+            : scoreColor(p.seasons?.[season]?.score)
         return {
-          fillColor: scoreColor(s),
+          fillColor,
           fillOpacity: 0.55,
           color: '#334155',
           weight: 1,
@@ -51,7 +64,7 @@ export default function MapView({ data, season, layers, selected, onSelect }) {
     })
     lyr.addTo(map.current)
     layerRefs.current.wards = lyr
-  }, [wardFeatures, season, onSelect])
+  }, [wardFeatures, season, layers.wardLayer, onSelect])
 
   // NDBI raster grid (drawn as small rects via canvas-less layer)
   useEffect(() => {
@@ -136,7 +149,6 @@ export default function MapView({ data, season, layers, selected, onSelect }) {
   useEffect(() => {
     if (!map.current) return
     const refs = layerRefs.current
-    if (refs.wards) layers.choropleth ? refs.wards.addTo(map.current) : map.current.removeLayer(refs.wards)
     if (refs.ndbi) layers.ndbi ? refs.ndbi.addTo(map.current) : map.current.removeLayer(refs.ndbi)
     if (refs.corridors) layers.corridors ? refs.corridors.addTo(map.current) : map.current.removeLayer(refs.corridors)
     if (refs.arrows) layers.arrows ? refs.arrows.addTo(map.current) : map.current.removeLayer(refs.arrows)
@@ -148,7 +160,7 @@ export default function MapView({ data, season, layers, selected, onSelect }) {
       <div id="map" ref={el} />
       {selected && <WardDetail ward={selected} season={season} onClose={() => onSelect(null)} />}
       <WindCard wind={wind} season={season} />
-      <Legend layers={layers} />
+      <Legend layers={layers} lstRange={lstRange} />
     </>
   )
 }
@@ -170,6 +182,8 @@ function WardDetail({ ward, season, onClose }) {
       <div style={{ color: 'var(--muted)', fontSize: '0.75rem', marginBottom: 6 }}>
         Ventilation rank #{s.rank} of 24 · {SEASON_LABELS[season]}
       </div>
+      <div><b>LST:</b> {ward.lst_c != null ? `${ward.lst_c.toFixed(1)} °C` : '—'} <span style={{ color: 'var(--muted)' }}>(land surface, summer median)</span></div>
+      <div><b>Priority rank:</b> #{ward.priority_rank ?? '—'} of 24 <span style={{ color: 'var(--muted)' }}>(score {ward.priority_score?.toFixed(2) ?? '—'})</span></div>
       <div><b>NDBI:</b> {ward.ndbi?.toFixed(3) ?? '—'} <span style={{ color: 'var(--muted)' }}>(built-up index)</span></div>
       <div style={{ marginTop: 8 }}><b>Recommendation</b><br />{s.rec}</div>
     </div>
@@ -192,13 +206,33 @@ function WindCard({ wind, season }) {
   )
 }
 
-function Legend({ layers }) {
-  if (!layers.choropleth) return null
+function Legend({ layers, lstRange }) {
+  if (layers.wardLayer === 'ventilation') {
+    return (
+      <div className="legend">
+        <div style={{ marginBottom: 4 }}><b>Ventilation score</b></div>
+        {[['#15803d', '80–100  excellent'], ['#4ade80', '60–80  good'], ['#facc15', '40–60  fair'], ['#ea580c', '20–40  poor'], ['#b91c1c', '0–20  critical']].map(([c, label]) => (
+          <div key={c}><span className="swatch" style={{ background: c }} />{label}</div>
+        ))}
+        {layers.ndbi && <div style={{ marginTop: 6, fontSize: '0.66rem', color: 'var(--muted)' }}>NDBI overlay: blue = built, amber = open</div>}
+        {layers.corridors && <div style={{ marginTop: 2, fontSize: '0.66rem' }}><span className="swatch" style={{ background: 'transparent', borderBottom: '3px dashed #0ea5e9' }} />Ventilation corridor</div>}
+      </div>
+    )
+  }
+  const heat = layers.wardLayer === 'heat'
+  const [lo, hi] = lstRange ?? [null, null]
   return (
     <div className="legend">
-      <div style={{ marginBottom: 4 }}><b>Ventilation score</b></div>
-      {[['#15803d', '80–100  excellent'], ['#4ade80', '60–80  good'], ['#facc15', '40–60  fair'], ['#ea580c', '20–40  poor'], ['#b91c1c', '0–20  critical']].map(([c, label]) => (
-        <div key={c}><span className="swatch" style={{ background: c }} />{label}</div>
+      <div style={{ marginBottom: 4 }}>
+        <b>{heat ? 'Land surface temperature' : 'Priority (hot + poorly ventilated)'}</b>
+      </div>
+      {[1, 0.75, 0.5, 0.25, 0].map((t) => (
+        <div key={t}>
+          <span className="swatch" style={{ background: heatColor(t) }} />
+          {heat && lo != null
+            ? `${(lo + t * (hi - lo)).toFixed(1)} °C${t === 1 ? '  hottest' : t === 0 ? '  coolest' : ''}`
+            : `${t.toFixed(2)}${t === 1 ? '  highest' : t === 0 ? '  lowest' : ''}`}
+        </div>
       ))}
       {layers.ndbi && <div style={{ marginTop: 6, fontSize: '0.66rem', color: 'var(--muted)' }}>NDBI overlay: blue = built, amber = open</div>}
       {layers.corridors && <div style={{ marginTop: 2, fontSize: '0.66rem' }}><span className="swatch" style={{ background: 'transparent', borderBottom: '3px dashed #0ea5e9' }} />Ventilation corridor</div>}

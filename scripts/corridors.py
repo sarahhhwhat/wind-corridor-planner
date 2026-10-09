@@ -19,12 +19,23 @@ wind_seasons.json is combined with per-ward NDBI (built-up density) to give:
    wards they cross as "protect recommended"; the worst-scoring wards get
    "create new corridor / green space" recommendations.
 
+3. Heat + priority per ward (from scripts/lst.py, data/lst_by_ward.csv):
+     lst_c, heat_score   summer median land surface temperature (Landsat 8/9,
+                         Mar-May 2021-2025) and its 0..1 min-max normalisation
+                         (0 = coolest ward, 1 = hottest ward);
+     priority_score = 0.5 * heat_score + 0.5 * (1 - ventilation_score)
+     with ventilation_score = summer score / 100 (already 0..100), so priority
+     is 0..1 and rank 1 = highest priority = hot + poorly ventilated. The
+     SUMMER ventilation score is used because it matches the LST window.
+
 Outputs:
-  web/public/data/wards.geojson    full ward dataset + per-season score/rank
+  web/public/data/wards.geojson    full ward dataset + LST/priority +
+                                   per-season score/rank
   web/public/data/corridors_{winter,summer,monsoon}.geojson
 
 Geometry is processed in EPSG:32643 (UTM 43N) and converted back to EPSG:4326.
 """
+import csv
 import json
 import os
 
@@ -38,6 +49,7 @@ OUT_DIR = os.path.join(ROOT, "web", "public", "data")
 WARDS_BASE = os.path.join(OUT_DIR, "wards_base.geojson")
 NDBI_JSON = os.path.join(OUT_DIR, "ndbi.json")
 WIND_JSON = os.path.join(OUT_DIR, "wind_seasons.json")
+LST_CSV = os.path.join(ROOT, "data", "lst_by_ward.csv")  # scripts/lst.py
 
 SEASONS = ["winter", "summer", "monsoon"]
 
@@ -48,6 +60,14 @@ def load():
     ndbi = json.load(open(NDBI_JSON))["ndbi"]
     wind = json.load(open(WIND_JSON))
     return wards, wards_utm, ndbi, wind
+
+
+def load_lst():
+    """Ward summer LST from scripts/lst.py -> {ward: {lst_c, heat_score, ...}}."""
+    if not os.path.exists(LST_CSV):
+        raise SystemExit(f"{LST_CSV} missing - run scripts/lst.py first")
+    with open(LST_CSV) as f:
+        return {r["ward"]: r for r in csv.DictReader(f)}
 
 
 def norm(v):
@@ -183,6 +203,7 @@ def season_output(wards_utm, ndbi, wind_season, season):
 
 def main():
     wards, wards_utm, ndbi, wind = load()
+    lst = load_lst()
     props = {}
     corridor_features = {}
     for season in SEASONS:
@@ -227,6 +248,26 @@ def main():
             })
         corridor_features[season] = feats
 
+    # Heat + priority: 0.5 * heat_score + 0.5 * (1 - ventilation_score),
+    # ventilation_score = SUMMER score / 100 (same Mar-May window as the LST
+    # composite). Both 0..1; rank 1 = highest priority (hot + poorly
+    # ventilated).
+    ids = list(wards_utm["id"])
+    heat = np.array([float(lst[i]["heat_score"]) for i in ids])
+    vent = np.array([props[i]["summer"]["score"] for i in ids]) / 100.0
+    priority = 0.5 * heat + 0.5 * (1.0 - vent)
+    order = np.argsort(-priority)
+    prank = np.empty(len(ids), dtype=int)
+    prank[order] = np.arange(1, len(ids) + 1)
+    prio = {wid: (round(float(priority[k]), 3), int(prank[k]))
+            for k, wid in enumerate(ids)}
+
+    print("priority (0.5*heat + 0.5*(1-vent), summer ventilation):")
+    for wid in sorted(ids, key=lambda w: prio[w][1]):
+        print(f"  #{prio[wid][1]:>2} {wid:<4} priority={prio[wid][0]:.3f} "
+              f"lst={lst[wid]['lst_c']}C heat={lst[wid]['heat_score']} "
+              f"vent={props[wid]['summer']['score']}")
+
     out_features = []
     for _, row in wards.iterrows():
         wid = row["id"]
@@ -235,6 +276,10 @@ def main():
             "display_name": row["display_name"],
             "area_km2": float(row["area_km2"]),
             "ndbi": ndbi.get(wid),
+            "lst_c": float(lst[wid]["lst_c"]),
+            "heat_score": float(lst[wid]["heat_score"]),
+            "priority_score": prio[wid][0],
+            "priority_rank": prio[wid][1],
             "seasons": props.get(wid, {}),
         }
         out_features.append({

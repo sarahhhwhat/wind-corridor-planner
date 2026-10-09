@@ -13,7 +13,7 @@ async function fetchJson(name) {
 
 export default function App() {
   const [season, setSeason] = useState('winter')
-  const [layers, setLayers] = useState({ choropleth: true, ndbi: false, corridors: true, arrows: true })
+  const [layers, setLayers] = useState({ wardLayer: 'priority', ndbi: false, corridors: true, arrows: true })
   const [selected, setSelected] = useState(null)     // ward props or null
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)

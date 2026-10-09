@@ -17,16 +17,33 @@ const RAMP = [
 
 export function scoreColor(score) {
   if (score == null) return '#64748b'
-  const t = Math.max(0, Math.min(1, score / 100))
-  for (let i = 1; i < RAMP.length; i++) {
-    if (t <= RAMP[i][0]) {
-      const [t0, c0] = RAMP[i - 1]
-      const [t1, c1] = RAMP[i]
+  return rampColor(RAMP, Math.max(0, Math.min(1, score / 100)))
+}
+
+// Land surface temperature / priority ramp (t 0..1, blue cool -> red hot)
+const HEAT_RAMP = [
+  [0, '#1d4ed8'],
+  [0.25, '#38bdf8'],
+  [0.5, '#facc15'],
+  [0.75, '#f97316'],
+  [1, '#b91c1c'],
+]
+
+export function heatColor(t) {
+  if (t == null) return '#64748b'
+  return rampColor(HEAT_RAMP, Math.max(0, Math.min(1, t)))
+}
+
+function rampColor(ramp, t) {
+  for (let i = 1; i < ramp.length; i++) {
+    if (t <= ramp[i][0]) {
+      const [t0, c0] = ramp[i - 1]
+      const [t1, c1] = ramp[i]
       const f = (t - t0) / (t1 - t0 || 1)
       return lerpColor(c0, c1, f)
     }
   }
-  return RAMP.at(-1)[1]
+  return ramp.at(-1)[1]
 }
 
 function lerpColor(a, b, f) {
