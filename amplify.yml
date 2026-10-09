@@ -1,0 +1,24 @@
+version: 1
+# Monorepo: the web app lives in web/, so appRoot is set accordingly.
+applications:
+  - appRoot: web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+    customHeaders:
+      - pattern: '**/data/**'
+        headers:
+          - key: Cache-Control
+            value: 'public, max-age=300'
