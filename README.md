@@ -3,6 +3,33 @@
 Ward-level map of Mumbai’s urban ventilation and heat. Combines prevailing wind, built-up
 density and land surface temperature from satellite data to find where airflow is blocked
 and where corridors or open space help most.
+## Links
+
+- **Live app:** https://main.d1dxyfiuyw7180.amplifyapp.com
+- **Demo video:** https://youtube.com/shorts/BPHI9MOtOWg
+- **Blog:** https://builder.aws.com/content/3KWDAGw6eeHWXaqYRwGYSYElH3A/i-never-thought-id-build-something-around-sustainability-a-heat-and-wind-priority-map-for-mumbai
+
+Built for the WeMakeDevs x AWS Hackathon.
+
+## Hosting on AWS
+
+The web app is hosted on **AWS Amplify**. The GitHub repo is connected to Amplify, and the build settings are in `amplify.yml`. Every push to `main` triggers a new build and deploys the live site.
+
+## Limitations
+
+- Land SURFACE temperature, not air temperature.
+- The 50/50 weighting of heat and ventilation is a design choice.
+- Building height is not included yet.
+- Locality names are indicative; boundaries follow BMC's 24 wards.
+- LST is a March to May snapshot (2021 to 2025), not the whole year.
+
+## Data sources and credits
+
+- Landsat 8/9 Collection 2 Level-2 via Microsoft Planetary Computer
+- Sentinel-2 (built-up density, NDBI)
+- Open-Meteo (ERA5 wind)
+- OpenStreetMap basemap
+- Ward boundaries: data/mumbai_wards.geojson
 
 ## Data pipeline
 
@@ -71,3 +98,4 @@ React + Vite + Leaflet, OpenStreetMap basemap. Ward layer switcher (Priority —
 Ventilation score, Heat (LST)), seasonal wind tabs, corridor lines, ward popup with
 locality names, and top-5 tables (priority / best / worst ventilated); layout is
 responsive down to phone widths.
+
